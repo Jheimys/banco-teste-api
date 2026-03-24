@@ -30,21 +30,40 @@ describe('VADER - Testes da API: /login', function () {
       expect(res.status).to.equal(400); 
     });
 
+    it('Técnica (D): Deve retornar 400 ao enviar apenas o username sem senha', async function () {
+      const payloadInvalido = { username: 'user@email.com' };
+      const res = await request(API_URL).post('/login').send(payloadInvalido);
+
+      expect(res.status).to.equal(400);
+    });
+
     it('Técnica (D): Deve retornar 400 Bad Request ao enviar payload totalmente vazio', async function () {
       const res = await request(API_URL).post('/login').send({});
       expect(res.status).to.equal(400);
     });
   });
 
-  context('E - Errors & Exceptions (Erros mapeados e Não-Autorizado)', function () {
-    it('Técnica (E): Deve retornar 401 Unauthorized com credenciais propositalmente inválidas', async function () {
-      const res = await request(API_URL).post('/login')
-        .send({ username: 'usuario_falso_999', senha: 'wrongpassword' });
-      
-      // Falha de Login esperada no Swagger é 401
-      expect(res.status).to.equal(401);
-    });
+ context('E - Errors & Exceptions (Erros mapeados e Não-Autorizado)', function () {
+
+  it('Técnica (E): Deve retornar 401 Unauthorized com usuário inexistente', async function () {
+    const res = await request(API_URL).post('/login')
+      .send({ username: 'usuario_falso_999', senha: '123' });
+
+    expect(res.status).to.equal(401);
+    expect(res.body).to.have.property('message');
+    expect(res.body).to.not.have.property('token');
   });
+
+  it('Técnica (E): Deve retornar 401 Unauthorized com senha incorreta', async function () {
+    const res = await request(API_URL).post('/login')
+      .send({ username: 'usuario_valido', senha: 'senha_errada' });
+
+    expect(res.status).to.equal(401);
+    expect(res.body).to.have.property('message');
+    expect(res.body).to.not.have.property('token');
+  });
+
+});
 
   context('R - Responses (Schema e Cabeçalhos)', function () {
     it('Técnica (R): Deve formatar o body de retorno com a propriedade "token" (Validação de Schema)', async function () {
